@@ -1,0 +1,277 @@
+{% extends "base_generic_extern.html" %}
+{% block content %}
+
+
+
+
+<style>
+   textarea {
+   resize: none;
+   }
+   .maincontent{
+   max-width:600px;
+   float: none;
+   margin: 0 auto;
+   min-height: 500px;
+   }
+
+ 
+</style>
+<script>
+   $(document).ready(function () {
+
+
+    $('.ml_rondvaart').hide()
+   $('.alldata').hide()
+   $('.ml_cat').hide()
+   $('#location-widget').hide()
+
+   })
+</script>
+
+<script>
+
+
+   $(document).ready(function() {
+   
+       function getCookie(c_name) {
+           if (document.cookie.length > 0) {
+               c_start = document.cookie.indexOf(c_name + "=");
+               if (c_start != -1) {
+                   c_start = c_start + c_name.length + 1;
+                   c_end = document.cookie.indexOf(";", c_start);
+                   if (c_end == -1) c_end = document.cookie.length;
+                   return unescape(document.cookie.substring(c_start, c_end));
+               }
+           }
+           return "";
+       }
+   
+           $.ajaxSetup({
+               headers: {
+                   "X-CSRFToken": getCookie("csrftoken")
+               }})
+   
+      
+   
+   
+   })
+</script>
+{% if  wizard.steps.current  == 'form1' %}
+<script>
+
+    
+
+function showPosition(position) {
+    console.log('POINT ('+position.coords.longitude+' '+position.coords.latitude+')')
+    $('input[name=form1-coordinates]').val('POINT ('+position.coords.longitude+' '+position.coords.latitude+')')
+     $('#location-widget').locationpicker('location', {
+         latitude: parseFloat(position.coords.latitude),
+         longitude: parseFloat(position.coords.longitude)/*,
+         [optional] radius: number*/
+     });
+}
+
+
+
+
+function getLocation() {
+    var x = document.getElementById("demo");
+    if (navigator.geolocation) {
+
+                navigator.geolocation.getCurrentPosition(showPosition);
+
+    } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+}
+
+
+   $(document).ready(function () {
+   
+   $('input[name=form1-coordinates]').val('POINT (0.0 0.0)')
+   
+   
+   $('input[name=form1-coordinates]').hide()
+   $('label[for=id_form1-coordinates]').hide()
+   $('input[name=form1-adres]').attr('style','width:100%')
+   $('table').attr('width','100%')
+   var options = 
+   {
+   location: {
+    latitude: 52.3702,
+    longitude: 4.8952
+   },
+   locationName: "Amsterdam",
+   radius: 25,
+   zoom: 13,
+   mapTypeId: google.maps.MapTypeId.ROADMAP,
+   styles: [],
+   mapOptions: {},
+   scrollwheel: true,
+   inputBinding: {
+    locationNameInput: $('input[name=form1-adres]')
+   },
+   enableAutocomplete: true,
+   enableAutocompleteBlur: true,
+   autocompleteOptions: null,
+   addressFormat: 'postal_code',
+   enableReverseGeocode: true,
+   draggable: true,
+   onlocationnotfound: function(locationName) {},
+   oninitialized: function (component) {$('input[name=form1-adres]').val('');},
+   markerIcon: undefined,
+   markerDraggable: true,
+   markerVisible : true,
+   onchanged: function (currentLocation, radius, isMarkerDropped) {
+    console.log(currentLocation.longitude + ' ' + currentLocation.latitude)
+    $('input[name=form1-coordinates]').val('POINT (' + currentLocation.longitude + ' ' + currentLocation.latitude + ')')
+   
+   
+   }
+   }
+   $('#location-widget').show()
+   $('#location-widget').height('300px')
+   $('#location-widget').locationpicker(options);
+
+
+   $('form').submit(function () {
+
+    if ($('input[name=form1-coordinates]').val() === 'POINT (0.0 0.0)') {
+        alert('Dit is geen bekend adres. Probeer opnieuw of geef de locatie aan op de kaart.');
+        return false;
+    }
+});
+   
+   
+   })
+</script>
+{% endif %}
+{% if  wizard.steps.current  == 'form2'  or wizard.steps.current  == 'formWaternet'%}
+<script>
+   function initLeaflet() { 
+    var la = parseFloat($('.map').text().split(' ')[2].replace(')',''));
+    var ln = parseFloat($('.map').text().split(' ')[1].replace('(',''));
+   var mymap = L.map('map').setView([la, ln], 13);
+   L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+   
+   maxZoom: 20,
+   id: 'mapbox.streets',
+   accessToken: 'pk.eyJ1IjoibWFhcnRlbnN1a2VsIiwiYSI6ImNqZTl2azhwMjBuYjUzMmxpcXd6cGl0Z2EifQ.KuuAK6OPP6NXGdZEIRDE8Q'
+   }).addTo(mymap);
+   
+   var marker = L.marker([la, ln]).addTo(mymap);
+   }
+   
+   
+   
+   function addData() {
+
+   
+   $('#id_form2-text_extra').attr('placeholder',$('.ml_cat').text())
+   $('#id_form2-datetime_overlast').before('<br>')
+   $('#id_formWaternet-waternet_soort_boot').before('<br>')
+   $('#id_formWaternet-waternet_rederij').before('<br>')
+   $('#id_formWaternet-waternet_naam_boot').before('<br>')
+  $('#id_form2-text_extra').before('<br>')
+   $("#yourdatetimeid").prop("readonly", true);
+
+
+
+   
+   }
+   $(document).ready(function() {
+   
+   $('.datetimepicker-days th.switch').removeClass( "switch" )
+
+   $('.switch').attr('style','border:0px')
+
+   $('#location-widget').hide()
+   $('#location-widget').attr('height','0px')
+
+   $('select[id=id_formWaternet-waternet_soort_boot]').val($('.ml_rondvaart').text())
+
+   if ($('.ml_rondvaart').text()=='n') {
+   $('.waternet_rederij').parent().hide()
+}
+   $('.waternet_soort_boot').change(function() {
+   if($('.waternet_soort_boot').val()=='j') {
+   $('.waternet_rederij').parent().show(500)
+   }
+   else {
+   $('.waternet_rederij').parent().hide(500)
+   $('.waternet_rederij  option[value=Onbekend]').attr('selected','selected');
+   }
+   });
+   
+   addData()
+   $('#id_formWaternet-waternet_rederij').selectpicker({
+  style: 'btn-info',
+  size: 4
+})
+
+
+    $('textarea[name=form1-text]').before('<br>')
+
+    
+
+   })
+</script>
+{% endif %}
+<div class='row maincontent'>
+   <h1>Melding overlast op het water</h1>
+
+{% if  wizard.steps.current  == 'form2'  or wizard.steps.current  == 'formWaternet'%}
+   <div class='ml_cat'>{{ wizard.hint_text}}</div>
+
+   <div class='ml_rondvaart'>{{ wizard.rondvaart}}</div>
+
+   {% endif %}
+   {% if  wizard.steps.current  == 'form3' %}
+   <script>
+ $(document).ready(function() {
+$("#id_form3-email").before('<br>')
+$("#id_form3-phone_number").before('<br>')
+})
+   </script>
+   </p>
+   Wilt u op de hoogte gehouden worden van de afhandeling van uw melding? Geef dan hier uw e-mailadres op.
+   <p>
+
+    <p>
+
+    Soms is handig dat we u kunnen bellen voor vragen. Bijvoorbeeld om het probleem beter op te kunnen lossen. Is dit voor u OK? Geef dan hier uw telefoonnummer op. 
+</p>
+
+      {% endif %}
+   <form class='form' action="." method="post" enctype='multipart/form-data'>
+      {% csrf_token %}
+      {{ wizard.management_form }}
+      {% if wizard.form.forms %}
+      {{ wizard.form.management_form }}
+      {% for form in wizard.form.forms %}
+      {{ form.as_p }}
+      {% endfor %}
+      {% else %}
+      {{ wizard.form.as_p }}
+      {% endif %}
+      {% if wizard.steps.prev %}
+      {% endif %}
+
+      {% if  wizard.steps.current  == 'form1' %}
+      <div id="location-widget" style="width: 100%; height: 300px;"></div> 
+      {% endif %}
+
+      {% if  wizard.steps.current  != 'form3' %}
+      <input type="submit" class='save action primary' value="Volgende stap" >
+      {% endif %}
+      {% if  wizard.steps.current  == 'form3' %}
+      <p>
+We gebruiken deze gegevens alléén voor het terugmelden/vragen.
+Zowel het e-mailadres als telefoonnummer worden altijd gewist 2 weken na afhandelen van de melding.
+</p>
+      <input type="submit" class='save action primary' value="Melding maken" >
+      {% endif %}
+   </form>
+</div>
+{% endblock %}

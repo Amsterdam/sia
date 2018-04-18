@@ -1,0 +1,79 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+
+<h2>Bedankt voor uw melding</h2>
+
+U kunt doormiddel van het volgende nummer uw melding volgen: MELDING-{{ pk }}
+
+<div class='text'>
+
+</div>
+<script>
+$.getJSON( "/api/signal/{{ pk }}/?format=json", function( data ) {
+console.log(data)
+if (data['email'] != ''){
+     $('.text').append( '<p>Deze koppeling wordt ook verstuurd naar '+data['email']+'</p>')
+}
+
+if (data['phone_number'] != ''){
+     $('.text').append( '<p>Deze koppeling wordt ook verstuurd naar '+data['phone_number']+'</p>')
+}
+
+   $.getJSON( "/api/status/?format=json", function( data ) {
+   
+   
+   var arrayLength = data.length;
+  
+   for (var i = 0; i < arrayLength; i++) {
+    if (data[i]['signal'] == {{ pk }}) {
+   
+    var date = data[i]['datetime'].split('T')[0]
+    var time = data[i]['datetime'].split('T')[1].split('.')[0].split('Z')[0]
+    var text = data[i]['text']
+    var status = data[i]['status']
+
+    if (status=='m'){
+      status = 'Gemeld'
+    }
+        if (status=='i'){
+      status = 'In afwachting op behandeling'
+    }
+        if (status=='o'){
+      status = 'Opgelost'
+    }
+    var extern = data[i]['extern']
+    if (extern){
+    var markup = "<tr><td>"+date+"</td><td>"+time+"</td><td>"+status+"</td><td>"+text+"</td></tr>";
+     $("table tbody.status").append(markup)
+ }
+
+    }
+   }
+   
+   });
+}
+
+
+)
+</script>
+
+
+ <div class="status">
+        <h2>Status</h2>
+
+     <table class='table'>
+        <thead>
+           <tr>
+              <th>Datum</th>
+              <th>Tijd</th>
+              <th>Status</th>
+              <th>Tekst</th>
+           </tr>
+        </thead>
+        <tbody class='status'>
+        </tbody>
+      </table>
+  </div>
+
+{% endblock %}

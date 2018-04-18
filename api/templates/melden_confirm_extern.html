@@ -1,0 +1,25 @@
+{% extends "base_generic_extern.html" %}
+{% block content %}
+
+<style>
+.maincontent{
+ max-width:600px;
+     float: none;
+    margin: 0 auto;
+    min-height: 400px;
+}
+</style>
+<div class='maincontent row'>
+<h1>Bedankt!</h1>
+
+<div class='category'>
+{% autoescape off %}{{bedankttekst}}{%  endautoescape  %}
+</div>
+<p>
+Het nummer van uw melding:
+</p>
+<p style='font-size: 150%'>
+ MELDING {{signal.pk}}
+</p>
+</div>
+{% endblock %}

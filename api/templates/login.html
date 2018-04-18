@@ -1,0 +1,39 @@
+{% extends "base_generic.html" %}
+{% block content %}
+
+
+<script>
+   $(document).ready(function () {
+$('label[for=id_password]').before('<br>')
+$('#id_password').before('<br>')
+})
+</script>
+  <div class="row">
+
+
+    <div class="col-lg-3 col-centered">
+
+     {% if user.is_authenticated %}
+U bent al ingelogt.
+    {% else %}
+     
+
+
+
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+{{ login_form }}
+</div>
+    <button type="submit" class="save  action primary ">Inloggen</button>
+  </form>
+    </div>
+</div>
+
+
+
+    {% endif %}
+
+{% endblock %}
+
+

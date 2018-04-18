@@ -1,0 +1,60 @@
+
+.row.content {height: 1200px;
+}
+
+
+textarea {
+	width: 100%;
+}
+
+.new_status input {
+  width:100%;
+  height: 100%;
+}
+.mw-wrap {
+	width: 100%;
+}
+.mw-coordinates-wrap {
+	visibility: hidden;
+	width: 0px;
+}
+
+.btn-default {
+	width: 100%;
+}
+
+.disabled .mw-btn{
+	visibility: hidden;
+	height: 0px;
+}
+
+
+
+.mw-header .mw-adress-input-wrap {
+	width: 60%;
+}
+
+
+#map {
+	width:100%;
+	height:400px;
+}
+
+header {
+      background-color: #555;
+      color: white;
+      padding: 15px;
+    }
+
+footer {
+      background-color: #555;
+      color: white;
+      padding: 15px;
+    }
+    
+
+.has_header_modern {
+
+font-family: 'Lato', sans-serif;
+
+}

@@ -1,0 +1,407 @@
+{% extends "base_generic.html" %}
+{% block content %}
+
+<script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+   integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+   crossorigin=""/>
+<link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+ <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+   integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+   crossorigin=""></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/twbs-pagination/1.4.1/jquery.twbsPagination.min.js'></script>
+<script>
+  function generate(data) {
+
+      displayRecords = data['results']
+
+
+
+      var la_total = 0
+      var ln_total = 0
+      for (var i = 0; i < displayRecords.length; i++) {
+
+          var la = parseFloat(displayRecords[i].coordinates.split(' ')[2].replace(')', ''));
+          la_total += la
+          var ln = parseFloat(displayRecords[i].coordinates.split(' ')[1].replace('(', ''));
+          ln_total += ln
+      }
+
+      var la_mean = la_total / displayRecords.length
+      var ln_mean = ln_total / displayRecords.length
+      if (typeof markers != 'undefined') {
+
+          mymap.removeLayer(markers)
+      }
+
+      markers = []
+      for (var i = 0; i < displayRecords.length; i++) {
+
+          var la = parseFloat(displayRecords[i].coordinates.split(' ')[2].replace(')', ''));
+          var ln = parseFloat(displayRecords[i].coordinates.split(' ')[1].replace('(', ''));
+
+
+          tr = '<table class="table-condensed"><thead><tr><td></td><td></td></tr></thead><tr>'
+          tr += "<tr><td>ID</td><td><a href=/melding/" + displayRecords[i].id + ">" + displayRecords[i].id + "</a></td></tr>";
+          tr += "<tr><td>Datum</td><td>" + displayRecords[i].datetime.split('T')[0] + "</td></tr>";
+          tr += "<tr><td>Tijd</td><td>" + displayRecords[i].datetime.split('T')[1].split('.')[0].split('Z')[0].slice(0, 5) + "</td></tr>";
+          tr += "<tr><td>Stadsdeel</td><td>" + displayRecords[i].stadsdeel + "</td></tr>";
+          tr += "<tr><td>Rubriek</td><td>" + displayRecords[i].sub_category + "</tr>";
+          var status = displayRecords[i].last_status
+          if (status == 'm') {
+              status = 'Gemeld'
+          }
+          if (status == 'i') {
+              status = 'In afwachting van behandeling'
+          }
+          if (status == 'o') {
+              status = 'Afgehandeld'
+          }
+          tr += "<tr><td>Status</td><td>" + status + "</tr></table>";
+          if (la != 0 && ln != 0)
+          markers.push(L.marker([la, ln]).bindPopup(tr))
+      }
+
+      markers = L.layerGroup(markers).addTo(mymap)
+
+  }
+
+
+
+
+  function apply_pagination(page) {
+      $('#pagination').html('<nav aria-label="Page navigation example"><ul class="pagination"></ul></nav>')
+      if (page > 1) {
+          var prev = page - 1
+          $('.pagination').append('<li class="page-item"><a class="page-link" onclick="load_meldingen(' + prev + ')">Vorige</a></li>')
+      }
+
+      for (var i = 1; i < totalPages + 1; i++) {
+          if (i == page) {
+              $('.pagination').append('<li class="page-item active"><a class="page-link" >' + i + '</a></li>')
+          } else {
+
+              $('.pagination').append('<li class="page-item"><a class="page-link" onclick="load_meldingen(' + i + ')">' + i + '</a></li>')
+          }
+
+      }
+      if (page < totalPages) {
+          var next = parseInt(page) + 1
+          $('.pagination').append('<li class="page-item"><a class="page-link" onclick="load_meldingen(' + next + ')">Volgende</a></li>')
+
+      }
+
+
+      get_filters()
+  }
+
+function get_filters() {
+
+
+var stadsdeel = $('.filters #stadsdeel option:selected');
+
+if (stadsdeel.length>0) {
+var stadsdeelfilter = '&stadsdeel='
+}
+else {
+  var stadsdeelfilter = ''
+}
+for (var i = 0; i < stadsdeel.length; i++) {
+  stadsdeelfilter += stadsdeel[i].text+','
+}
+
+
+var status = $('.filters #status option:selected');
+if (status.length>0) {
+var statusfilter = '&last_status='
+}
+else
+{
+var statusfilter = ''
+}
+for (var i = 0; i < status.length; i++) {
+
+  status_ = status[i].text
+    if (status_=='Gemeld'){
+      status_ = 'm'
+    }
+        if (status_=='In afwachting op behandeling'){
+      status_ = 'i'
+    }
+        if (status_=='Afgehandeld'){
+      status_ = 'o'
+    }
+
+  statusfilter += status_+','
+}
+
+
+
+var rubriek = $('.filters #rubriek option:selected');
+
+if (rubriek.length>0) {
+var rubriekfilter = '&sub_category='
+}
+else {
+  var rubriekfilter = ''
+}
+for (var i = 0; i < rubriek.length; i++) {
+  rubriekfilter += rubriek[i].text+','
+}
+
+
+var email = $('.filters #email').val();
+if (email == '') {
+  var emailfilter = ''
+}
+else {
+  var emailfilter = '&email='+email
+}
+
+var id = $('.filters #id').val();
+
+if (id == '') {
+  var idfilter = ''
+}
+else {
+  var idfilter = '&id='+id
+}
+
+var adres = $('.filters #adres').val();
+
+if (adres == '') {
+  var adresfilter = ''
+}
+else {
+  var adresfilter = '&adres='+adres
+}
+
+var phone_number = $('.filters #phone_number').val();
+if (phone_number == '') {
+  var phone_numberfilter = ''
+}
+else {
+  var phone_numberfilter = '&phone_number='+phone_number
+}
+
+var datum= $('.filters #datum').val();
+if (datum == '') {
+  var datumfilter = ''
+}
+else {
+  var datumfilter = '&datetime='+datum
+}
+
+console.log(stadsdeelfilter + rubriekfilter + emailfilter + phone_numberfilter +idfilter + datumfilter + statusfilter + adresfilter)
+return stadsdeelfilter + rubriekfilter + emailfilter + phone_numberfilter +idfilter + datumfilter + statusfilter + adresfilter
+
+
+}
+   
+
+  function load_meldingen(page) {
+
+      filters = ['stadsdeel', 'rubriek', 'email', 'id', 'phone_number', 'datum', 'status', 'adres']
+
+      $(".filters").change(function() {
+          load_meldingen(page)
+      });
+      $(".filters").keyup(function(event) {
+          if (event.keyCode === 13) {
+              load_meldingen(page)
+          }
+      });
+
+$(".filters").on('search', function () {
+load_meldingen(page)
+  })
+
+      totalRecords = 0,
+          records = [],
+          displayRecords = [],
+          recPerPage = 100,
+          totalPages = 0;
+offset = recPerPage*(page-1)
+ $(document).ajaxStop(function () {
+
+ finished = true;
+ });
+
+console.log(finished)
+if (finished==true) {
+ finished = false;
+
+$.ajax({
+      url: "/api/signal/?format=json"+get_filters()+'&offset='+offset,
+      async: true,
+      dataType: 'json',
+      success: function (data) {
+                  console.log(data)
+                  records = data;
+                  totalRecords = records['count'];
+                  $('.meldingen_title').text('Meldingen (' + totalRecords +')')
+                  totalPages = Math.ceil(totalRecords / recPerPage);
+                  apply_pagination(page);
+                  generate(data) ;
+      }
+})
+
+}
+}
+
+
+
+  $(document).ready(function() {
+    finished = true
+    page = 1
+      load_meldingen(page)
+      setInterval(function () {load_meldingen(page)},30000);
+      document.getElementById('map').innerHTML = "<div id='map' style='width: 100%; height: 100%;'></div>";
+
+      mymap = L.map('map').setView([52.3702, 4.8952], 13);
+      L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+          attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+          maxZoom: 30,
+          id: 'mapbox.streets',
+          accessToken: 'pk.eyJ1IjoibWFhcnRlbnN1a2VsIiwiYSI6ImNqZTl2azhwMjBuYjUzMmxpcXd6cGl0Z2EifQ.KuuAK6OPP6NXGdZEIRDE8Q'
+      }).addTo(mymap);
+
+  });
+</script>
+
+<style>
+
+
+   table {
+   border-collapse: collapse;   
+   }
+   table tr {
+   background-color: #eee;
+   border-top: 1px solid #fff;
+   }
+   table tr:hover {
+   background-color: #ccc;
+   }
+   table th {
+   background-color: #fff;
+   }
+   table th, tablee td {
+   padding: 3px 5px;
+   }
+   table td:hover {
+   cursor: pointer;
+   }
+   table{
+   border-collapse: collapse;   
+   }
+
+   .filters select{width:100%;}
+   .filters input{width:100%;}
+   .filters li{width:100%;max-width: 300px;}
+   #map { height: 500px; }
+</style>
+<div class="show row">
+
+<div class="col-sm-3">
+<h2>Filters</h2>
+
+<div class='filters'>
+<div class='stadsdelen'>
+<ul class='nav navbar-nav'>
+
+<li>
+
+<p>ID (Meldingsnummer)</p>
+  <input type="text"  id='id'>
+
+</li>
+
+
+<li>
+<p>Datum</p>
+  <input type="text"  id='datum'>
+</li>
+
+  <li>
+<p>Stadsdeel</p>
+  <select id='stadsdeel' multiple>
+  <option selected>Centrum</option>
+  <option selected>Noord</option>
+  <option selected>West</option>
+  <option selected>Nieuw-West</option>
+  <option selected>Oost</option>
+  <option selected>Zuid</option>
+  <option selected>Zuidoost</option>
+  <option selected>Geen stadsdeel</option>
+</select>
+</li>
+
+<li>
+<p>Rubriek</p>
+
+
+
+  <select id='rubriek' multiple>
+  <option selected>Snel varen</option>
+  <option selected>Scheepvaart nautisch toezicht</option>
+  <option selected>Gezonken boot</option>
+  <option selected>Geluid</option>
+  <option selected></option>
+</select>
+</li>
+
+
+<li>
+<p>Status</p>
+  <select id='status' multiple>
+  <option selected>Gemeld</option>
+  <option selected>In afwachting op behandeling</option>
+  <option>Afgehandeld</option>
+</select>
+</li>
+
+
+<li>
+<p>Email</p>
+  <input type="text"  id='email'>
+</select>
+</li>
+
+<li>
+<p>Telefoon</p>
+  <input type="text"  id='phone_number'>
+</select>
+</li>
+
+<li>
+<p>Adres</p>
+  <input type="text"  id='adres'>
+</select>
+</li>
+
+
+
+</ul>
+</div>
+</div>
+</div>
+
+<div class="col-sm-9">
+
+
+<h2 class='meldingen_title'>Meldingen</h2>
+<div style="overflow-x:auto;">
+<div id='map'></div>
+</div>
+
+<div id='pagination'>
+
+</div>
+
+<div style='height:300px'></div>
+</div>
+
+</div>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ def tryStep(String message, Closure block, Closure tearDown = null) {
         block();
     }
     catch (Throwable t) {
-        slackSend message: "${env.JOB_NAME}: ${message} failure ${env.BUILD_URL}", channel: '#stadinbalans', color: 'danger'
+        slackSend message: "${env.JOB_NAME}: ${message} failure ${env.BUILD_URL}", channel: '#ci-channel-app', color: 'danger'
 
         throw t;
     }
@@ -67,7 +67,7 @@ if (BRANCH == "master") {
     }
 
     stage('Waiting for approval') {
-        slackSend channel: '#stadinbalans', color: 'warning', message: 'Vaarwater meldingen is waiting for Production Release - please confirm'
+        slackSend channel: '#ci-channel-app', color: 'warning', message: 'Vaarwater meldingen is waiting for Production Release - please confirm'
         input "Deploy to Production?"
     }
 
